@@ -1,133 +1,104 @@
 "use client";
 
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Text, Stars, useScroll, ScrollControls, Scroll } from '@react-three/drei';
-import { motion } from 'framer-motion';
-import { useRef, useState, createContext, useContext, Suspense, useMemo } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Text, Float, MeshDistortMaterial, ScrollControls, Scroll, useScroll } from '@react-three/drei';
+import { useRef, Suspense } from 'react';
 import * as THREE from 'three';
 
-const ThemeContext = createContext({ theme: 'dark', toggleTheme: () => {} });
-
-function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState('dark');
-  const toggleTheme = () => setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
-  return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
-}
-
-const useTheme = () => useContext(ThemeContext);
-
-function Obelisk() {
+function CentralCore() {
   const meshRef = useRef<THREE.Mesh>(null);
-  const { theme } = useTheme();
-  
-  useFrame(() => {
-    if (meshRef.current && meshRef.current.material) {
-      meshRef.current.rotation.y += 0.005;
-      const targetColor = theme === 'dark' ? 0x00ff88 : 0x333333;
-      (meshRef.current.material as THREE.MeshStandardMaterial).emissive.setHex(targetColor);
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = state.clock.getElapsedTime() * 0.3;
+      meshRef.current.rotation.x = state.clock.getElapsedTime() * 0.2;
     }
   });
 
   return (
-    <mesh ref={meshRef} position={[0, 0, 0]}>
-      <boxGeometry args={[1, 4, 1]} />
-      <meshStandardMaterial 
-        color={theme === 'dark' ? '#000000' : '#ffffff'} 
-        emissive={theme === 'dark' ? '#00ff88' : '#cccccc'} 
-        emissiveIntensity={1.5}
-      />
-    </mesh>
+    <Float speed={2} rotationIntensity={1} floatIntensity={1}>
+      <mesh ref={meshRef}>
+        <icosahedronGeometry args={[1.5, 0]} />
+        <MeshDistortMaterial 
+          color="#d4af37" // Gold for Recrenzo theme
+          emissive="#d4af37"
+          emissiveIntensity={0.5}
+          distort={0.3} 
+          speed={2} 
+        />
+      </mesh>
+    </Float>
   );
 }
 
-function Particles() {
-  const pointsRef = useRef<THREE.Points>(null);
-  const { mouse } = useThree();
-  
-  const posArray = useMemo(() => {
-    const arr = new Float32Array(3000);
-    for (let i = 0; i < 3000; i++) arr[i] = (Math.random() - 0.5) * 20;
-    return arr;
-  }, []);
-
-  useFrame(() => {
-    if (pointsRef.current) {
-      pointsRef.current.rotation.x = mouse.y * 0.05;
-      pointsRef.current.rotation.y = mouse.x * 0.05;
-    }
-  });
-
+function Section({ title, subtitle, positionY }: { title: string, subtitle: string, positionY: number }) {
   return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={1000} array={posArray} itemSize={3} args={[posArray, 3]} />
-        
-      </bufferGeometry>
-      <pointsMaterial size={0.03} color="#00ff88" transparent opacity={0.6} />
-    </points>
+    <group position={[0, positionY, 0]}>
+      <Text position={[0, 2, 0]} fontSize={0.7} color="#d4af37" font="sans-serif" anchorX="center">
+        {title}
+      </Text>
+      <Text position={[0, 1, 0]} fontSize={0.2} color="#ffffff" maxWidth={4} textAlign="center">
+        {subtitle}
+      </Text>
+    </group>
   );
-}
-
-// THIS IS THE CAMERA CONTROLLER YOU WERE LOOKING FOR
-function CameraController() {
-  const scroll = useScroll();
-  const { camera } = useThree();
-  useFrame(() => {
-    const t = scroll.offset;
-    camera.position.set(0, -t * 30, 5);
-    camera.lookAt(0, -t * 30, 0);
-  });
-  return null;
 }
 
 function Scene() {
+  const scroll = useScroll();
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(() => {
+    if (groupRef.current) {
+      groupRef.current.position.y = scroll.offset * 30;
+    }
+  });
+
   return (
-    <>
-      <ambientLight intensity={1} />
-      <pointLight position={[10, 10, 10]} intensity={2} />
-      <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade />
-      <Particles />
-      <Obelisk />
-      <Text position={[0, 3, 1]} fontSize={1} color="#00ff88" anchorX="center" anchorY="middle">
-        It's me, Krishna.
-      </Text>
-      <group position={[0, -10, 0]}>
-         <Text fontSize={0.8} color="#00ff88">The Strategist</Text>
-         <Text position={[0, -1, 0]} fontSize={0.3} color="white">Trading & Pine Script</Text>
-      </group>
-      <group position={[0, -20, 0]}>
-         <Text fontSize={0.8} color="#00ff88">The Alchemist</Text>
-         <Text position={[0, -1, 0]} fontSize={0.3} color="white">AI Videos & Recrenzo</Text>
-      </group>
-      <CameraController />
-    </>
+    <group ref={groupRef}>
+      <CentralCore />
+      <Section 
+        title="THE STRATEGIST" 
+        subtitle="Mastering Pine Script & Trading Logic. Developing custom indicators for financial precision." 
+        positionY={-10} 
+      />
+      <Section 
+        title="THE ALCHEMIST" 
+        subtitle="Founder of Recrenzo. Crafting AI-powered content and high-conversion Shopify experiences." 
+        positionY={-20} 
+      />
+    </group>
   );
 }
 
 export default function Home() {
   return (
-    <ThemeProvider>
-      <main className="w-full h-screen bg-black">
-        <Suspense fallback={null}>
-          <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
-            <ScrollControls pages={4} damping={0.2}>
-              <Scroll>
-                <Scene />
-              </Scroll>
-            </ScrollControls>
-          </Canvas>
-        </Suspense>
-        
-        {/* 2D Overlay UI */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center">
-            <p className="mb-4 text-xs text-green-400 tracking-widest">SCROLL TO EXPLORE</p>
-            <button className="pointer-events-auto bg-black border border-green-500 text-green-400 px-8 py-3 rounded-md font-bold">
-              CONTACT KRISHNA
-            </button>
+    <main className="w-full h-screen bg-[#050505]">
+      <Suspense fallback={null}>
+        <Canvas camera={{ position: [0, 0, 8] }}>
+          <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} intensity={1.5} color="#d4af37" />
+          <ScrollControls pages={3} damping={0.2}>
+            <Scene />
+          </ScrollControls>
+        </Canvas>
+      </Suspense>
+
+      {/* Modern Overlay */}
+      <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-12">
+        <div className="flex justify-between items-start pointer-events-auto">
+          <h1 className="text-white font-light tracking-[0.5em] text-xl">KRISHNA TILOKANI</h1>
+          <div className="text-[#d4af37] text-xs tracking-widest border border-[#d4af37]/30 px-4 py-2 rounded-full">
+            CLASS 11 PCM | MAHARASHTRA
           </div>
         </div>
-      </main>
-    </ThemeProvider>
+        
+        <div className="flex flex-col items-center">
+          <p className="text-white/40 text-[10px] tracking-[0.3em] mb-4 uppercase">Scroll to Interface</p>
+          <button className="pointer-events-auto bg-transparent border border-[#d4af37] text-[#d4af37] px-8 py-3 text-xs tracking-[0.2em] hover:bg-[#d4af37] hover:text-black transition-all">
+            ACCESS TERMINAL
+          </button>
+        </div>
+      </div>
+    </main>
   );
 }
