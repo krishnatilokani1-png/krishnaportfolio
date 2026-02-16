@@ -1,11 +1,11 @@
 "use client";
 
-import React, { Suspense, useRef, useState } from 'react';
+import React, { Suspense, useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Float, Stars, PerspectiveCamera, Environment, MeshDistortMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 
-// --- 1. HIGH-END LIQUID 3D OBJECT ---
+// --- 1. OPTIMIZED LIQUID CORE (Mobile Friendly) ---
 function LiquidCore({ isDark }: { isDark: boolean }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHover] = useState(false);
@@ -25,8 +25,9 @@ function LiquidCore({ isDark }: { isDark: boolean }) {
         ref={meshRef} 
         onPointerOver={() => setHover(true)} 
         onPointerOut={() => setHover(false)}
+        // MOBILE FIX: Reduced segments from 128 to 64 for performance
       >
-        <sphereGeometry args={[1, 128, 128]} />
+        <sphereGeometry args={[1, 64, 64]} />
         <MeshDistortMaterial 
           color={isDark ? "#00ff88" : "#333"} 
           envMapIntensity={1} 
@@ -34,7 +35,7 @@ function LiquidCore({ isDark }: { isDark: boolean }) {
           clearcoatRoughness={0.1} 
           metalness={0.9} 
           roughness={0.1}
-          distort={0.55} // Increased distortion for more "liquid" feel
+          distort={0.4} // Slightly reduced distortion for stability
           speed={2} 
         />
       </mesh>
@@ -56,7 +57,7 @@ function InteractiveParticles() {
 
   return (
     <group rotation={[0, 0, Math.PI / 4]}>
-      <Stars radius={50} depth={50} count={6000} factor={4} saturation={0} fade speed={1} />
+      <Stars radius={50} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
     </group>
   );
 }
@@ -101,13 +102,14 @@ export default function Home() {
     overflowY: 'scroll',
     scrollBehavior: 'smooth',
     zIndex: 10,
+    WebkitOverflowScrolling: 'touch', // MOBILE FIX: Smooth scrolling on iOS
   };
 
   const navStyle: React.CSSProperties = {
     position: 'fixed',
     top: 0,
     width: '100%',
-    padding: '30px 50px',
+    padding: '20px 25px', // Adjusted for mobile screens
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -125,34 +127,35 @@ export default function Home() {
     position: 'relative',
   };
 
-  // Glass Card Style
   const cardStyle: React.CSSProperties = {
     background: isDark ? 'rgba(20, 20, 20, 0.7)' : 'rgba(255, 255, 255, 0.8)',
     backdropFilter: 'blur(20px)',
     border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.05)',
-    padding: '50px',
+    padding: '40px 30px', // Adjusted padding for mobile
     borderRadius: '16px',
     maxWidth: '700px',
+    width: '100%', // Ensure it fits mobile screens
     boxShadow: isDark ? '0 20px 50px rgba(0,0,0,0.5)' : '0 20px 50px rgba(0,0,0,0.1)',
     transition: 'transform 0.3s ease',
   };
 
-  // Smaller Card Style for the Split Section
   const smallCardStyle: React.CSSProperties = {
     ...cardStyle,
-    flex: 1,
-    minWidth: '300px',
-    margin: '10px',
+    flex: '1 1 300px', // Allow wrapping on mobile
+    margin: '10px 0', // Vertical spacing on mobile
   };
 
   return (
     <div style={containerStyle}>
-      {/* ERROR FIX: Use standard link tag */}
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet" />
 
-      {/* 3D BACKGROUND */}
+      {/* 3D BACKGROUND - MOBILE OPTIMIZED */}
       <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
-        <Canvas gl={{ antialias: true }} dpr={[1, 2]}>
+        <Canvas 
+          // MOBILE FIX: Clamp Pixel Ratio to max 1.5 to prevent crashing
+          dpr={[1, 1.5]} 
+          gl={{ antialias: true, powerPreference: "high-performance" }}
+        >
           <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
           <Suspense fallback={null}>
             <BackgroundScene isDark={isDark} />
@@ -165,21 +168,21 @@ export default function Home() {
         
         {/* NAV */}
         <nav style={navStyle}>
-          <div style={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '-1px' }}>KRISHNA TILOKANI</div>
+          <div style={{ fontSize: '1.1rem', fontWeight: 900, letterSpacing: '-1px' }}>KRISHNA TILOKANI</div>
           <button 
             onClick={() => setIsDark(!isDark)}
             style={{ 
               background: 'transparent', 
               border: '1px solid white', 
-              padding: '8px 20px', 
+              padding: '8px 15px', 
               borderRadius: '50px', 
               cursor: 'pointer',
-              fontSize: '0.7rem',
+              fontSize: '0.6rem',
               fontWeight: 700,
               color: 'white'
             }}
           >
-            {isDark ? 'ZEN MODE' : 'CYBER MODE'}
+            {isDark ? 'ZEN' : 'CYBER'}
           </button>
         </nav>
 
@@ -187,7 +190,7 @@ export default function Home() {
         <section style={{ ...sectionStyle, alignItems: 'center', textAlign: 'center' }}>
           <div style={{ zIndex: 2 }}>
             <h1 style={{ 
-              fontSize: 'clamp(3rem, 8vw, 7rem)', 
+              fontSize: 'clamp(3rem, 10vw, 7rem)', 
               fontWeight: 900, 
               letterSpacing: '-0.05em', 
               lineHeight: 0.9,
@@ -202,22 +205,22 @@ export default function Home() {
                 Krishna.
               </span>
             </h1>
-            <p style={{ fontSize: '1rem', letterSpacing: '0.3em', textTransform: 'uppercase', opacity: 0.7, marginTop: '20px' }}>
+            <p style={{ fontSize: '0.9rem', letterSpacing: '0.3em', textTransform: 'uppercase', opacity: 0.7, marginTop: '20px' }}>
               Strategist & Alchemist
             </p>
           </div>
         </section>
 
         {/* STRATEGIST SECTION */}
-        <section style={{ ...sectionStyle, alignItems: 'flex-start', paddingLeft: '10vw' }}>
+        <section style={{ ...sectionStyle, alignItems: 'center' }}>
           <div style={cardStyle}>
             <span style={{ color: '#00ff88', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>01 / Logic</span>
-            <h2 style={{ fontSize: '3rem', fontWeight: 800, margin: '15px 0', letterSpacing: '-2px' }}>THE STRATEGIST</h2>
-            <p style={{ fontSize: '1.1rem', lineHeight: 1.6, opacity: 0.8, marginBottom: '30px' }}>
+            <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 800, margin: '15px 0', letterSpacing: '-2px' }}>THE STRATEGIST</h2>
+            <p style={{ fontSize: '1rem', lineHeight: 1.6, opacity: 0.8, marginBottom: '30px' }}>
               I don't just follow the market; I decode it. Specializing in <strong>Pine Script</strong> and advanced financial logic, 
               I engineer custom indicators and trading algorithms that provide a statistical edge.
             </p>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               {['Pine Script', 'TradingView', 'Algorithm Design'].map(tag => (
                 <span key={tag} style={{ 
                   fontSize: '0.7rem', border: '1px solid rgba(125,125,125,0.3)', padding: '5px 15px', borderRadius: '100px'
@@ -229,19 +232,19 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ALCHEMIST SECTION (Split into 2 Blocks) */}
-        <section style={{ ...sectionStyle, paddingRight: '10vw', paddingLeft: '10vw' }}>
-          <div style={{ textAlign: 'right', marginBottom: '40px' }}>
+        {/* ALCHEMIST SECTION */}
+        <section style={{ ...sectionStyle }}>
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
              <span style={{ color: '#00d2ff', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>02 / Creation</span>
-             <h2 style={{ fontSize: '3rem', fontWeight: 800, margin: '10px 0', letterSpacing: '-2px' }}>THE ALCHEMIST</h2>
+             <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 800, margin: '10px 0', letterSpacing: '-2px' }}>THE ALCHEMIST</h2>
           </div>
           
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center', width: '100%' }}>
             
             {/* Block 1: Recrenzo */}
             <div style={smallCardStyle}>
               <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '10px', color: isDark ? '#fff' : '#000' }}>RECRENZO</h3>
-              <p style={{ opacity: 0.7, marginBottom: '20px', lineHeight: 1.6 }}>
+              <p style={{ opacity: 0.7, marginBottom: '20px', lineHeight: 1.6, fontSize: '0.9rem' }}>
                 My Shopify e-commerce brand. I use high-conversion design principles to build stores that actually sell.
               </p>
               <span style={{ fontSize: '0.7rem', background: '#00d2ff', color: '#000', padding: '5px 10px', borderRadius: '4px', fontWeight: 'bold' }}>SHOPIFY</span>
@@ -250,7 +253,7 @@ export default function Home() {
             {/* Block 2: AI Automation */}
             <div style={smallCardStyle}>
               <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '10px', color: isDark ? '#fff' : '#000' }}>FACELESS AI</h3>
-              <p style={{ opacity: 0.7, marginBottom: '20px', lineHeight: 1.6 }}>
+              <p style={{ opacity: 0.7, marginBottom: '20px', lineHeight: 1.6, fontSize: '0.9rem' }}>
                 Scaling Instagram channels without a camera. I build automated pipelines to generate viral content using AI.
               </p>
               <span style={{ fontSize: '0.7rem', background: '#00ff88', color: '#000', padding: '5px 10px', borderRadius: '4px', fontWeight: 'bold' }}>AI VIDEO</span>
@@ -269,16 +272,17 @@ export default function Home() {
           >
             <button 
               style={{ 
-                fontSize: '1.5rem', 
+                fontSize: 'clamp(1rem, 4vw, 1.5rem)', 
                 fontWeight: 900, 
                 background: 'transparent', 
                 color: isDark ? '#00ff88' : '#111', 
                 border: isDark ? '2px solid #00ff88' : '2px solid #111',
-                padding: '20px 60px', 
+                padding: '20px 40px', 
                 textTransform: 'uppercase',
                 letterSpacing: '2px',
                 cursor: 'pointer',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                width: '100%'
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.background = isDark ? '#00ff88' : '#111';
@@ -293,7 +297,7 @@ export default function Home() {
             </button>
           </a>
           
-          <p style={{ marginTop: '20px', fontSize: '1rem', fontWeight: 'bold', color: isDark ? '#fff' : '#000' }}>
+          <p style={{ marginTop: '20px', fontSize: '0.9rem', fontWeight: 'bold', color: isDark ? '#fff' : '#000' }}>
             krishnatilokani6@gmail.com
           </p>
           <p style={{ marginTop: '10px', fontSize: '0.8rem', opacity: 0.4 }}>Nagpur, India</p>
