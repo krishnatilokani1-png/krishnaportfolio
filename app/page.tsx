@@ -5,18 +5,15 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Float, Stars, PerspectiveCamera, Environment, MeshDistortMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 
-// --- 1. NEW INTERACTIVE "LIQUID CORE" OBJECT ---
+// --- 1. HIGH-END LIQUID 3D OBJECT ---
 function LiquidCore({ isDark }: { isDark: boolean }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHover] = useState(false);
 
   useFrame((state) => {
     if (meshRef.current) {
-      // Smooth rotation
       meshRef.current.rotation.x = state.clock.getElapsedTime() * 0.2;
       meshRef.current.rotation.y = state.clock.getElapsedTime() * 0.3;
-      
-      // Scale up slightly when hovered
       const targetScale = hovered ? 2.2 : 1.8;
       meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
     }
@@ -30,7 +27,6 @@ function LiquidCore({ isDark }: { isDark: boolean }) {
         onPointerOut={() => setHover(false)}
       >
         <sphereGeometry args={[1, 128, 128]} />
-        {/* This material creates the liquid metal effect */}
         <MeshDistortMaterial 
           color={isDark ? "#00ff88" : "#333"} 
           envMapIntensity={1} 
@@ -38,7 +34,7 @@ function LiquidCore({ isDark }: { isDark: boolean }) {
           clearcoatRoughness={0.1} 
           metalness={0.9} 
           roughness={0.1}
-          distort={0.5} 
+          distort={0.55} // Increased distortion for more "liquid" feel
           speed={2} 
         />
       </mesh>
@@ -46,14 +42,13 @@ function LiquidCore({ isDark }: { isDark: boolean }) {
   );
 }
 
-// --- 2. INTERACTIVE PARTICLE FIELD ---
+// --- 2. INTERACTIVE PARTICLES ---
 function InteractiveParticles() {
   const ref = useRef<THREE.Points>(null);
   const { mouse } = useThree();
 
   useFrame(() => {
     if (ref.current) {
-      // Rotate entire starfield gently based on mouse position
       ref.current.rotation.x = THREE.MathUtils.lerp(ref.current.rotation.x, mouse.y * 0.2, 0.05);
       ref.current.rotation.y = THREE.MathUtils.lerp(ref.current.rotation.y, mouse.x * 0.2, 0.05);
     }
@@ -61,7 +56,7 @@ function InteractiveParticles() {
 
   return (
     <group rotation={[0, 0, Math.PI / 4]}>
-      <Stars radius={50} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+      <Stars radius={50} depth={50} count={6000} factor={4} saturation={0} fade speed={1} />
     </group>
   );
 }
@@ -83,7 +78,7 @@ function BackgroundScene({ isDark }: { isDark: boolean }) {
 export default function Home() {
   const [isDark, setIsDark] = useState(true);
 
-  // --- INLINE STYLES (No CSS File Dependency) ---
+  // --- STYLES ---
   const containerStyle: React.CSSProperties = {
     fontFamily: "'Inter', sans-serif",
     position: 'fixed',
@@ -130,22 +125,32 @@ export default function Home() {
     position: 'relative',
   };
 
+  // Glass Card Style
   const cardStyle: React.CSSProperties = {
-    background: isDark ? 'rgba(20, 20, 20, 0.6)' : 'rgba(255, 255, 255, 0.6)',
+    background: isDark ? 'rgba(20, 20, 20, 0.7)' : 'rgba(255, 255, 255, 0.8)',
     backdropFilter: 'blur(20px)',
     border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.05)',
     padding: '50px',
-    borderRadius: '12px',
+    borderRadius: '16px',
     maxWidth: '700px',
     boxShadow: isDark ? '0 20px 50px rgba(0,0,0,0.5)' : '0 20px 50px rgba(0,0,0,0.1)',
+    transition: 'transform 0.3s ease',
+  };
+
+  // Smaller Card Style for the Split Section
+  const smallCardStyle: React.CSSProperties = {
+    ...cardStyle,
+    flex: 1,
+    minWidth: '300px',
+    margin: '10px',
   };
 
   return (
     <div style={containerStyle}>
-      {/* ERROR FIX: Standard HTML Link instead of style jsx */}
+      {/* ERROR FIX: Use standard link tag */}
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet" />
 
-      {/* 3D BACKGROUND LAYER */}
+      {/* 3D BACKGROUND */}
       <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
         <Canvas gl={{ antialias: true }} dpr={[1, 2]}>
           <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={45} />
@@ -155,12 +160,12 @@ export default function Home() {
         </Canvas>
       </div>
 
-      {/* SCROLLABLE CONTENT LAYER */}
+      {/* CONTENT */}
       <div style={scrollContainerStyle}>
         
         {/* NAV */}
         <nav style={navStyle}>
-          <div style={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '-1px' }}>KRISHNA.IO</div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '-1px' }}>KRISHNA TILOKANI</div>
           <button 
             onClick={() => setIsDark(!isDark)}
             style={{ 
@@ -197,13 +202,7 @@ export default function Home() {
                 Krishna.
               </span>
             </h1>
-            <p style={{ 
-              fontSize: '1rem', 
-              letterSpacing: '0.3em', 
-              textTransform: 'uppercase', 
-              opacity: 0.7,
-              marginTop: '20px' 
-            }}>
+            <p style={{ fontSize: '1rem', letterSpacing: '0.3em', textTransform: 'uppercase', opacity: 0.7, marginTop: '20px' }}>
               Strategist & Alchemist
             </p>
           </div>
@@ -221,10 +220,7 @@ export default function Home() {
             <div style={{ display: 'flex', gap: '10px' }}>
               {['Pine Script', 'TradingView', 'Algorithm Design'].map(tag => (
                 <span key={tag} style={{ 
-                  fontSize: '0.7rem', 
-                  border: '1px solid rgba(125,125,125,0.3)', 
-                  padding: '5px 15px', 
-                  borderRadius: '100px',
+                  fontSize: '0.7rem', border: '1px solid rgba(125,125,125,0.3)', padding: '5px 15px', borderRadius: '100px'
                 }}>
                   {tag}
                 </span>
@@ -233,65 +229,74 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ALCHEMIST SECTION */}
-        <section style={{ ...sectionStyle, alignItems: 'flex-end', paddingRight: '10vw' }}>
-          <div style={{ ...cardStyle, textAlign: 'right' }}>
-            <span style={{ color: '#00d2ff', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>02 / Creation</span>
-            <h2 style={{ fontSize: '3rem', fontWeight: 800, margin: '15px 0', letterSpacing: '-2px' }}>THE ALCHEMIST</h2>
+        {/* ALCHEMIST SECTION (Split into 2 Blocks) */}
+        <section style={{ ...sectionStyle, paddingRight: '10vw', paddingLeft: '10vw' }}>
+          <div style={{ textAlign: 'right', marginBottom: '40px' }}>
+             <span style={{ color: '#00d2ff', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>02 / Creation</span>
+             <h2 style={{ fontSize: '3rem', fontWeight: 800, margin: '10px 0', letterSpacing: '-2px' }}>THE ALCHEMIST</h2>
+          </div>
+          
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
             
-            <div style={{ marginBottom: '25px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '5px' }}>RECRENZO</h3>
-              <p style={{ opacity: 0.7 }}>My Shopify e-commerce brand, built on high-conversion design.</p>
+            {/* Block 1: Recrenzo */}
+            <div style={smallCardStyle}>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '10px', color: isDark ? '#fff' : '#000' }}>RECRENZO</h3>
+              <p style={{ opacity: 0.7, marginBottom: '20px', lineHeight: 1.6 }}>
+                My Shopify e-commerce brand. I use high-conversion design principles to build stores that actually sell.
+              </p>
+              <span style={{ fontSize: '0.7rem', background: '#00d2ff', color: '#000', padding: '5px 10px', borderRadius: '4px', fontWeight: 'bold' }}>SHOPIFY</span>
             </div>
 
-            <div style={{ marginBottom: '30px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '5px' }}>AI AUTOMATION</h3>
-              <p style={{ opacity: 0.7 }}>Scaling faceless Instagram brands using AI-generated media pipelines.</p>
+            {/* Block 2: AI Automation */}
+            <div style={smallCardStyle}>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '10px', color: isDark ? '#fff' : '#000' }}>FACELESS AI</h3>
+              <p style={{ opacity: 0.7, marginBottom: '20px', lineHeight: 1.6 }}>
+                Scaling Instagram channels without a camera. I build automated pipelines to generate viral content using AI.
+              </p>
+              <span style={{ fontSize: '0.7rem', background: '#00ff88', color: '#000', padding: '5px 10px', borderRadius: '4px', fontWeight: 'bold' }}>AI VIDEO</span>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              {['Shopify', 'Faceless AI', 'Growth'].map(tag => (
-                <span key={tag} style={{ 
-                  fontSize: '0.7rem', 
-                  border: '1px solid rgba(125,125,125,0.3)', 
-                  padding: '5px 15px', 
-                  borderRadius: '100px',
-                }}>
-                  {tag}
-                </span>
-              ))}
-            </div>
           </div>
         </section>
 
         {/* CONTACT SECTION */}
         <section style={{ ...sectionStyle, alignItems: 'center', textAlign: 'center' }}>
           <h2 style={{ fontSize: '0.9rem', letterSpacing: '0.5em', textTransform: 'uppercase', marginBottom: '40px', opacity: 0.6 }}>System Ready</h2>
-          <button 
-            style={{ 
-              fontSize: '1.5rem', 
-              fontWeight: 900, 
-              background: 'transparent', 
-              color: isDark ? '#00ff88' : '#111', 
-              border: isDark ? '2px solid #00ff88' : '2px solid #111',
-              padding: '20px 60px', 
-              textTransform: 'uppercase',
-              letterSpacing: '2px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = isDark ? '#00ff88' : '#111';
-              e.currentTarget.style.color = isDark ? '#000' : '#fff';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = isDark ? '#00ff88' : '#111';
-            }}
+          
+          <a 
+            href="mailto:krishnatilokani6@gmail.com"
+            style={{ textDecoration: 'none' }}
           >
-            Contact Terminal
-          </button>
-          <p style={{ marginTop: '50px', fontSize: '0.8rem', opacity: 0.4 }}>Nagpur, India</p>
+            <button 
+              style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: 900, 
+                background: 'transparent', 
+                color: isDark ? '#00ff88' : '#111', 
+                border: isDark ? '2px solid #00ff88' : '2px solid #111',
+                padding: '20px 60px', 
+                textTransform: 'uppercase',
+                letterSpacing: '2px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = isDark ? '#00ff88' : '#111';
+                e.currentTarget.style.color = isDark ? '#000' : '#fff';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = isDark ? '#00ff88' : '#111';
+              }}
+            >
+              Contact Terminal
+            </button>
+          </a>
+          
+          <p style={{ marginTop: '20px', fontSize: '1rem', fontWeight: 'bold', color: isDark ? '#fff' : '#000' }}>
+            krishnatilokani6@gmail.com
+          </p>
+          <p style={{ marginTop: '10px', fontSize: '0.8rem', opacity: 0.4 }}>Nagpur, India</p>
         </section>
 
       </div>
